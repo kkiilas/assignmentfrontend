@@ -29,7 +29,16 @@ const parseDependencies = (text) => {
 }
 
 const parseExtras = (text) => {
-  return text.split('\r\n').map((extra) => extra.split(' = ')[0])
+  const extras = text
+    .split('\r\n')
+    .map((extra) => {
+      const row = extra.split(' = ')[1]
+      const trimmedRow = row.substring(2, row.length - 2)
+      const names = trimmedRow.split(`", "`).map((name) => name.split(' ')[0])
+      return names
+    })
+    .flat()
+  return extras
 }
 
 const regroupDepsAndExtras = (dependencies, extras) => {
@@ -67,8 +76,6 @@ const parseDepsAndExtras = (dependencies, extras) => {
   }
   if (extras) {
     extras = parseExtras(extras)
-    console.log('name', name)
-    console.log('extras', extras)
   }
   const regrouped = regroupDepsAndExtras(dependencies, extras)
   return regrouped
@@ -180,7 +187,6 @@ export const parse = (text) => {
   const packages = parseAttributes(text)
   const packagesOptionalInstalled = addOptionalInstalled(packages)
   const packagesWithReverseDep = addReverseDep(packagesOptionalInstalled)
-  console.log('packagesWithRv', packagesWithReverseDep)
   return (dispatch) => {
     dispatch(updatePackages(packagesWithReverseDep))
   }
