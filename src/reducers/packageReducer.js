@@ -62,7 +62,9 @@ const regroupDepsAndExtras = (dependencies, extras) => {
     optional = optional.concat(optionalDeps)
   }
   if (extras !== null) {
-    optional = optional.concat(extras)
+    extras
+      .filter((extra) => !optional.includes(extra))
+      .forEach((extra) => optional.push(extra))
   }
   if (optional.length === 0) {
     optional = null
