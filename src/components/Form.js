@@ -12,7 +12,7 @@ const Form = () => {
     if (name !== 'poetry.lock') {
       dispatch(
         setNotification(
-          `Wrong format. The name of the file must by "poetry.lock".`
+          `Wrong format. The name of the file must be "poetry.lock".`
         )
       )
       return false
