@@ -2,6 +2,7 @@ import React, { useRef } from 'react'
 import { useDispatch } from 'react-redux'
 import { parse, clearPackages } from '../reducers/packageReducer'
 import { setNotification } from '../reducers/notificationReducer'
+import fileService from '../services/fileService'
 
 const Form = () => {
   let fileInput = useRef()
@@ -14,9 +15,10 @@ const Form = () => {
           `Wrong format. The name of the file must by "poetry.lock".`
         )
       )
-      return
+      return false
     }
-    dispatch(setNotification('File accepted'))
+    dispatch(setNotification('File accepted!'))
+    return true
   }
 
   const handleSubmit = async (event) => {
@@ -24,9 +26,10 @@ const Form = () => {
     dispatch(clearPackages())
     const file = fileInput.current.files[0]
     const name = file.name
-    validateFileByName(name)
-    const text = await file.text()
-    dispatch(parse(text))
+    if (validateFileByName(name)) {
+      const text = await fileService.getText(file)
+      dispatch(parse(text))
+    }
   }
 
   return (
