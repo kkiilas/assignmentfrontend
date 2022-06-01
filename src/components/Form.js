@@ -1,18 +1,30 @@
 import React, { useRef } from 'react'
 import { useDispatch } from 'react-redux'
 import { parse, clearPackages } from '../reducers/packageReducer'
+import { setNotification } from '../reducers/notificationReducer'
 
 const Form = () => {
   let fileInput = useRef()
   const dispatch = useDispatch()
-  const handleSubmit = async (event) => {
-    event.preventDefault()
-    const file = fileInput.current.files[0]
-    const name = file.name
+
+  const validateFileByName = (name) => {
     if (name !== 'poetry.lock') {
-      dispatch(clearPackages())
+      dispatch(
+        setNotification(
+          `Wrong format. The name of the file must by "poetry.lock".`
+        )
+      )
       return
     }
+    dispatch(setNotification('File accepted'))
+  }
+
+  const handleSubmit = async (event) => {
+    event.preventDefault()
+    dispatch(clearPackages())
+    const file = fileInput.current.files[0]
+    const name = file.name
+    validateFileByName(name)
     const text = await file.text()
     dispatch(parse(text))
   }
