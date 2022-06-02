@@ -81,6 +81,7 @@ const regroupDepsAndExtras = (dependencies, extras) => {
     required = dependencies
       .filter((dep) => !dep.optional)
       .map((dep) => dep.name)
+      .sort((r1, r2) => r1 - r2)
   }
   if (required.length === 0) {
     required = null
@@ -97,9 +98,7 @@ const regroupDepsAndExtras = (dependencies, extras) => {
       .filter((extra) => !optional.includes(extra))
       .forEach((extra) => optional.push(extra))
   }
-  if (optional.length === 0) {
-    optional = null
-  }
+  optional = optional.length > 0 ? optional.sort() : null
   return { required, optional }
 }
 
@@ -142,7 +141,7 @@ const parseAttributes = (text) => {
   return packages
 }
 
-const provideDependencyWithIndexAndWhetherInstalled = (i, name, packages) => {
+const addIndexAndWhetherInstalledToDependency = (i, name, packages) => {
   const installedPackage = packages.find(
     (p) => p.name.toLowerCase() === name.toLowerCase()
   )
@@ -151,25 +150,48 @@ const provideDependencyWithIndexAndWhetherInstalled = (i, name, packages) => {
   return { id, name, installed }
 }
 
+const duplicate = (dependency, requiredDeps, optionalDeps) => {
+  const id = dependency.id
+  const name = dependency.name.toLowerCase()
+  return (
+    (requiredDeps &&
+      requiredDeps.map((dep) => dep.name.toLowerCase()).includes(name)) ||
+    optionalDeps.map((od) => od.id).includes(id) ||
+    optionalDeps.map((od) => od.name.toLowerCase()).includes(name)
+  )
+}
+
 const provideDependenciesWithIndices = (packages) => {
   const packagesWithIndexedDeps = packages.map((p) => {
-    let required = p.required
-    let optional = p.optional
+    let required = null
+    let optional = []
 
-    if (required) {
-      required = required.map((dependency, i) => {
-        const requiredDependency =
-          provideDependencyWithIndexAndWhetherInstalled(i, dependency, packages)
+    if (p.required) {
+      required = p.required.map((dependency, i) => {
+        const requiredDependency = addIndexAndWhetherInstalledToDependency(
+          i,
+          dependency,
+          packages
+        )
         return requiredDependency
       })
     }
 
-    if (optional) {
-      optional = p.optional.map((dependency, i) => {
-        const optionalDependency =
-          provideDependencyWithIndexAndWhetherInstalled(i, dependency, packages)
-        return optionalDependency
+    if (p.optional) {
+      p.optional.map((dependency, i) => {
+        const optionalDependency = addIndexAndWhetherInstalledToDependency(
+          i,
+          dependency,
+          packages
+        )
+        if (!duplicate(optionalDependency, required, optional)) {
+          optional.push(optionalDependency)
+        }
       })
+    }
+
+    if (optional.length === 0) {
+      optional = null
     }
 
     return { ...p, required, optional }
@@ -178,36 +200,40 @@ const provideDependenciesWithIndices = (packages) => {
 }
 
 const parseReverse = (packages) => {
-  const reverseDep = []
+  const reverseDepMap = []
   packages.forEach((p) => {
-    if (p.required) {
-      p.required.forEach((dep) => {
-        reverseDep.find((e) => e.key.toLowerCase() === dep.name.toLowerCase())
-          ? reverseDep
-              .find((e) => e.key.toLowerCase() === dep.name.toLowerCase())
-              .value.push(p.name)
-          : reverseDep.push({ key: dep.name, value: [p.name] })
+    const required = p.required
+    if (required) {
+      required.forEach((dep) => {
+        const reverseDepEntry = reverseDepMap.find(
+          (entry) => entry.key === dep.id
+        )
+        reverseDepEntry
+          ? reverseDepEntry.value.push(p.id)
+          : reverseDepMap.push({ key: dep.id, value: [p.id] })
       })
     }
   })
-  return reverseDep
+  return reverseDepMap
 }
 
-const addReverseDep = (packages) => {
-  const reverseDep = parseReverse(packages)
-  const packagesWithReverseDep = packages.map((p) => {
-    const entry = reverseDep.find(
-      (rd) => rd.key.toLowerCase() === p.name.toLowerCase()
-    )
-    if (entry) {
-      const reverse = entry.value.map((name, id) => {
-        return { name, id, installed: true }
-      })
+const addReverseDependencies = (packages) => {
+  const reverseDepMap = parseReverse(packages)
+  const packagesWithReverseDependencies = packages.map((p) => {
+    const reverseDepEntry = reverseDepMap.find((entry) => entry.key === p.id)
+    if (reverseDepEntry) {
+      const reverse = reverseDepEntry.value
+        .map((id) => {
+          const p = packages.find((p) => p.id === id)
+          const name = p.name
+          return { id, name, installed: true }
+        })
+        .sort((rd1, rd2) => rd1.id - rd2.id)
       return { ...p, reverse }
     }
     return { ...p, reverse: null }
   })
-  return packagesWithReverseDep
+  return packagesWithReverseDependencies
 }
 
 export const parse = (text) => {
@@ -222,7 +248,9 @@ export const parse = (text) => {
       return
     }
     const packagesOptionalInstalled = provideDependenciesWithIndices(packages)
-    const packagesWithReverseDep = addReverseDep(packagesOptionalInstalled)
+    const packagesWithReverseDep = addReverseDependencies(
+      packagesOptionalInstalled
+    )
     dispatch(updatePackages(packagesWithReverseDep))
     dispatch(setNotification('Validation succeeded!'))
   }
