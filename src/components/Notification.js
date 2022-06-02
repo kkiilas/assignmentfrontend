@@ -9,7 +9,7 @@ const Notification = () => {
   }
 
   return (
-    <h5 className="text-center bg-dark bg-gradient border border-info border-3 rounded-3 p-3">
+    <h5 className="text-center bg-dark bg-gradient border border-info border-3 rounded-3 p-3 lh-lg">
       {notification}
     </h5>
   )

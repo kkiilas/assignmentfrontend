@@ -21,12 +21,13 @@ export const { startNotification, clearNotification } =
   notificationSlice.actions
 
 export const setNotification = (notification) => {
+  const duration = notification.length * 250
   return (dispatch) => {
     clearTimeout(timeoutID)
     dispatch(startNotification(notification))
     timeoutID = setTimeout(() => {
       dispatch(clearNotification())
-    }, 5000)
+    }, duration)
   }
 }
 

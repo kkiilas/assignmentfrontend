@@ -2,7 +2,7 @@ import React from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import Dependencies from './Dependencies'
-import OptionalDependencies from './OptionalDependencies'
+// import OptionalDependencies from './OptionalDependencies'
 
 const Package = () => {
   const params = useParams()
@@ -32,7 +32,10 @@ const Package = () => {
             <h1>{p.name}</h1>
             <h5 className="pb-3">{p.description}</h5>
             <Dependencies header="Dependencies" dependencies={required} />
-            <OptionalDependencies dependencies={optional} />
+            <Dependencies
+              header="Optional Dependencies"
+              dependencies={optional}
+            />
             <Dependencies
               header="Reverse Dependencies"
               dependencies={reverse}

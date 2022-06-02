@@ -12,12 +12,11 @@ const Form = () => {
     if (name !== 'poetry.lock') {
       dispatch(
         setNotification(
-          `Wrong format. The name of the file must be "poetry.lock".`
+          `Wrong format! The name of the file must be "poetry.lock".`
         )
       )
       return false
     }
-    dispatch(setNotification('File accepted!'))
     return true
   }
 
@@ -25,11 +24,16 @@ const Form = () => {
     event.preventDefault()
     dispatch(clearPackages())
     const file = fileInput.current.files[0]
-    const name = file.name
-    if (validateFileByName(name)) {
-      const text = await fileService.getText(file)
-      dispatch(parse(text))
+    if (!file) {
+      dispatch(setNotification('No file detected. Submit a file!'))
+      return
     }
+    const name = file.name
+    if (!validateFileByName(name)) {
+      return
+    }
+    const text = await fileService.getText(file)
+    dispatch(parse(text))
   }
 
   return (

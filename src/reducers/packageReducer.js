@@ -1,4 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit'
+import { setNotification } from './notificationReducer'
 
 const initialState = []
 
@@ -16,6 +17,39 @@ const packageSlice = createSlice({
 })
 
 export const { clearPackages, updatePackages } = packageSlice.actions
+
+const parseParts = (parts) => {
+  const signifiers = parts[0]
+    .split('\r\n')
+    .map((row) => {
+      return row.split(' = ')
+    })
+    .filter((entry) => entry.length > 1)
+    .map((entry) => {
+      return { key: entry[0], value: entry[1].replaceAll(`"`, '') }
+    })
+    .filter((entry) => ['name', 'description'].includes(entry.key))
+  if (signifiers.length === 0) {
+    return null
+  }
+  const name = signifiers[0].value
+  const description = signifiers[1].value
+  let dependencies = null
+  let extras = null
+  const depsHeader = '[package.dependencies]\r\n'
+  const lengthOfExtrasHeader = '[package.extras]\r\n'.length
+  if (parts.length === 3) {
+    dependencies = parts[1].substring(depsHeader.length)
+    extras = parts[2].substring(lengthOfExtrasHeader)
+  } else if (parts.length === 2) {
+    if (parts[1].includes(depsHeader)) {
+      dependencies = parts[1].substring(depsHeader.length)
+    } else {
+      extras = parts[1].substring(lengthOfExtrasHeader)
+    }
+  }
+  return { name, description, dependencies, extras }
+}
 
 const parseDependencies = (text) => {
   return text.split('\r\n').map((dep) => {
@@ -46,10 +80,7 @@ const regroupDepsAndExtras = (dependencies, extras) => {
   if (dependencies) {
     required = dependencies
       .filter((dep) => !dep.optional)
-      .map((dep, id) => {
-        const name = dep.name
-        return { id, name }
-      })
+      .map((dep) => dep.name)
   }
   if (required.length === 0) {
     required = null
@@ -83,35 +114,6 @@ const parseDepsAndExtras = (dependencies, extras) => {
   return regrouped
 }
 
-const parseParts = (parts) => {
-  const signifiers = parts[0]
-    .split('\r\n')
-    .map((row) => {
-      return row.split(' = ')
-    })
-    .map((entry) => {
-      return { key: entry[0], value: entry[1].replaceAll(`"`, '') }
-    })
-    .filter((e) => ['name', 'description'].includes(e.key))
-  const name = signifiers[0].value
-  const description = signifiers[1].value
-  let dependencies = null
-  let extras = null
-  const depsHeader = '[package.dependencies]\r\n'
-  const lengthOfExtrasHeader = '[package.extras]\r\n'.length
-  if (parts.length === 3) {
-    dependencies = parts[1].substring(depsHeader.length)
-    extras = parts[2].substring(lengthOfExtrasHeader)
-  } else if (parts.length === 2) {
-    if (parts[1].includes(depsHeader)) {
-      dependencies = parts[1].substring(depsHeader.length)
-    } else {
-      extras = parts[1].substring(lengthOfExtrasHeader)
-    }
-  }
-  return { name, description, dependencies, extras }
-}
-
 const parseAttributes = (text) => {
   const packages = text
     .split('\r\n\r\n[[package]]\r\n')
@@ -124,32 +126,55 @@ const parseAttributes = (text) => {
         element = element.split('\r\n\r\n[metadata]')[0]
       }
       const parts = element.split('\r\n\r\n')
-      const { name, description, dependencies, extras } = parseParts(parts)
-      const { required, optional } = parseDepsAndExtras(dependencies, extras)
-      return { name, description, required, optional }
+      const parsedParts = parseParts(parts)
+      if (parsedParts) {
+        const { name, description, dependencies, extras } = parseParts(parts)
+        const { required, optional } = parseDepsAndExtras(dependencies, extras)
+        return { name, description, required, optional }
+      }
+      return null
     })
+    .filter((p) => p !== null)
     .sort((p1, p2) => p1.name - p2.name)
     .map((p, id) => {
-      return { ...p, id: id }
+      return { ...p, id }
     })
   return packages
 }
 
-const addOptionalInstalled = (packages) => {
-  const packagesOptionalInstalled = packages.map((p) => {
-    if (p.optional) {
-      const optionalInstalled = p.optional.map((o, id) => {
-        const name = o
-        const installed = packages
-          .map((p) => p.name.toLowerCase())
-          .includes(name.toLowerCase())
-        return { id, name, installed }
+const provideDependencyWithIndexAndWhetherInstalled = (i, name, packages) => {
+  const installedPackage = packages.find(
+    (p) => p.name.toLowerCase() === name.toLowerCase()
+  )
+  const id = installedPackage ? installedPackage.id : packages.length + i
+  const installed = installedPackage ? true : false
+  return { id, name, installed }
+}
+
+const provideDependenciesWithIndices = (packages) => {
+  const packagesWithIndexedDeps = packages.map((p) => {
+    let required = p.required
+    let optional = p.optional
+
+    if (required) {
+      required = required.map((dependency, i) => {
+        const requiredDependency =
+          provideDependencyWithIndexAndWhetherInstalled(i, dependency, packages)
+        return requiredDependency
       })
-      return { ...p, optional: optionalInstalled }
     }
-    return p
+
+    if (optional) {
+      optional = p.optional.map((dependency, i) => {
+        const optionalDependency =
+          provideDependencyWithIndexAndWhetherInstalled(i, dependency, packages)
+        return optionalDependency
+      })
+    }
+
+    return { ...p, required, optional }
   })
-  return packagesOptionalInstalled
+  return packagesWithIndexedDeps
 }
 
 const parseReverse = (packages) => {
@@ -176,7 +201,7 @@ const addReverseDep = (packages) => {
     )
     if (entry) {
       const reverse = entry.value.map((name, id) => {
-        return { name, id }
+        return { name, id, installed: true }
       })
       return { ...p, reverse }
     }
@@ -187,10 +212,19 @@ const addReverseDep = (packages) => {
 
 export const parse = (text) => {
   const packages = parseAttributes(text)
-  const packagesOptionalInstalled = addOptionalInstalled(packages)
-  const packagesWithReverseDep = addReverseDep(packagesOptionalInstalled)
   return (dispatch) => {
+    if (packages.length === 0) {
+      dispatch(
+        setNotification(
+          'No packages found! Double check the file you submitted. An example of a poetry.lock -file: https://github.com/python-poetry/poetry/blob/70e8e8ed1da8c15041c3054603088fce59e05829/poetry.lock'
+        )
+      )
+      return
+    }
+    const packagesOptionalInstalled = provideDependenciesWithIndices(packages)
+    const packagesWithReverseDep = addReverseDep(packagesOptionalInstalled)
     dispatch(updatePackages(packagesWithReverseDep))
+    dispatch(setNotification('Validation succeeded!'))
   }
 }
 

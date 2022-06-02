@@ -10,7 +10,11 @@ const Dependencies = ({ header, dependencies }) => {
     <div className="pb-3">
       <h3>{header}</h3>
       {dependencies.map((dependency) => (
-        <Dependency key={dependency.id} name={dependency.name} />
+        <Dependency
+          key={dependency.id}
+          name={dependency.name}
+          installed={dependency.installed}
+        />
       ))}
     </div>
   )

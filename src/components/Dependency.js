@@ -1,12 +1,11 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import InstalledDependency from './InstalledDependency'
 
-const Dependency = ({ name }) => {
-  return (
-    <Link className="link-info" to={`/${name}`}>
-      <h5>{name}</h5>
-    </Link>
-  )
+const Dependency = ({ name, installed }) => {
+  if (installed) {
+    return <InstalledDependency name={name} />
+  }
+  return <h5>{name}</h5>
 }
 
 export default Dependency
