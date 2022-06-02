@@ -128,7 +128,7 @@ const parseAttributes = (text) => {
       const parts = element.split('\r\n\r\n')
       const parsedParts = parseParts(parts)
       if (parsedParts) {
-        const { name, description, dependencies, extras } = parseParts(parts)
+        const { name, description, dependencies, extras } = parsedParts
         const { required, optional } = parseDepsAndExtras(dependencies, extras)
         return { name, description, required, optional }
       }
