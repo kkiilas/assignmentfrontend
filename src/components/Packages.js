@@ -10,15 +10,13 @@ const Packages = () => {
 
   return (
     <div className="d-flex flex-column align-items-center">
-      {packages
-        .sort((p1, p2) => p1.name - p2.name)
-        .map((p) => (
-          <div key={p.id}>
-            <Link className="link-info" to={`/${p.name}`}>
-              <h5>{p.name}</h5>
-            </Link>
-          </div>
-        ))}
+      {packages.map((p) => (
+        <div key={p.id}>
+          <Link className="link-info" to={`/${p.id}`}>
+            <h5>{p.name}</h5>
+          </Link>
+        </div>
+      ))}
     </div>
   )
 }

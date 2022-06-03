@@ -12,7 +12,7 @@ const Dependencies = ({ header, dependencies }) => {
     return name1 < name2 ? -1 : name1 > name2 ? 1 : 0
   }
 
-  const sortedDependencies = [...dependencies].sort((d1, d2) => compare(d1, d2))
+  const sortedDependencies = [...dependencies].sort(compare)
 
   return (
     <div className="pb-3">
@@ -20,6 +20,7 @@ const Dependencies = ({ header, dependencies }) => {
       {sortedDependencies.map((dependency) => (
         <Dependency
           key={dependency.id}
+          id={dependency.id}
           name={dependency.name}
           installed={dependency.installed}
         />

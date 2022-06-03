@@ -6,12 +6,15 @@ import Dependencies from './Dependencies'
 const Package = () => {
   const params = useParams()
   const packages = useSelector((state) => state.packages)
+
   if (packages.length === 0) {
     return <Navigate replace to="/" />
   }
-  const p = packages.find(
-    (p) => p.name.toLowerCase() === params.name.toLowerCase()
-  )
+
+  const p = packages.find((p) => {
+    return p.id === Number(params.id)
+  })
+
   if (!p) {
     return <Navigate replace to="/" />
   }
