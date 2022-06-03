@@ -98,7 +98,9 @@ const regroupDepsAndExtras = (dependencies, extras) => {
       .filter((extra) => !optional.includes(extra))
       .forEach((extra) => optional.push(extra))
   }
-  optional = optional.length > 0 ? optional.sort() : null
+  if (optional.length === 0) {
+    optional = null
+  }
   return { required, optional }
 }
 
