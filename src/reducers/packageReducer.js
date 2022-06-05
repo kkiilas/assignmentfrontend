@@ -253,7 +253,10 @@ export const parse = (text) => {
     const packagesWithReverseDep = addReverseDependencies(
       packagesOptionalInstalled
     )
-    window.localStorage.setItem('packages', JSON.stringify(packages))
+    window.localStorage.setItem(
+      'packages',
+      JSON.stringify(packagesWithReverseDep)
+    )
     dispatch(setPackages(packagesWithReverseDep))
     dispatch(setNotification('Validation succeeded!'))
   }
