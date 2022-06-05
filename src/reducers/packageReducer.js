@@ -7,7 +7,7 @@ const packageSlice = createSlice({
   name: 'packages',
   initialState,
   reducers: {
-    updatePackages(state, action) {
+    setPackages(state, action) {
       return action.payload
     },
     clearPackages() {
@@ -16,7 +16,7 @@ const packageSlice = createSlice({
   }
 })
 
-export const { clearPackages, updatePackages } = packageSlice.actions
+export const { clearPackages, setPackages } = packageSlice.actions
 
 const parseParts = (parts) => {
   const signifiers = parts[0]
@@ -253,7 +253,8 @@ export const parse = (text) => {
     const packagesWithReverseDep = addReverseDependencies(
       packagesOptionalInstalled
     )
-    dispatch(updatePackages(packagesWithReverseDep))
+    window.localStorage.setItem('packages', JSON.stringify(packages))
+    dispatch(setPackages(packagesWithReverseDep))
     dispatch(setNotification('Validation succeeded!'))
   }
 }

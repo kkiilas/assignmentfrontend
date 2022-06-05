@@ -23,6 +23,7 @@ const Form = () => {
   const handleSubmit = async (event) => {
     event.preventDefault()
     dispatch(clearPackages())
+    window.localStorage.clear()
     const file = fileInput.current.files[0]
     if (!file) {
       dispatch(setNotification('No file detected. Submit a file!'))

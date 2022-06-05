@@ -1,9 +1,21 @@
-import React from 'react'
-import { useSelector } from 'react-redux'
+import React, { useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { Link } from 'react-router-dom'
+import { setPackages } from '../reducers/packageReducer'
 
 const Packages = () => {
+  const dispatch = useDispatch()
+
+  useEffect(() => {
+    const packagesJSON = window.localStorage.getItem('packages')
+    if (packagesJSON) {
+      const packages = JSON.parse(packagesJSON)
+      dispatch(setPackages(packages))
+    }
+  }, [dispatch])
+
   const packages = useSelector((state) => [...state.packages])
+
   if (packages.length === 0) {
     return null
   }
