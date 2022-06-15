@@ -6,7 +6,7 @@ import Package from './components/Package'
 const App = () => {
   return (
     <Routes>
-      <Route path="/:id" element={<Package />} />
+      <Route path="/packages/:id" element={<Package />} />
       <Route path="/" element={<Home />} />
     </Routes>
   )

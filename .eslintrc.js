@@ -41,7 +41,7 @@ module.exports = {
     "arrow-spacing": [
       "error", { "before": true, "after": true }
     ],
-    "no-console": 0,
+    "no-console": 1,
     "react/prop-types": 0
   },
   "settings": {

@@ -5,10 +5,16 @@ import Dependencies from './Dependencies'
 
 const Package = () => {
   const params = useParams()
-  const packages = useSelector((state) => state.packages)
+  let packages = useSelector((state) => state.packages)
 
   if (packages.length === 0) {
-    return <Navigate replace to="/" />
+    const packagesJSON = window.localStorage.getItem('packages')
+    if (packagesJSON) {
+      packages = JSON.parse(packagesJSON)
+    }
+    if (!packagesJSON || packages.length === 0) {
+      return <Navigate replace to="/" />
+    }
   }
 
   const p = packages.find((p) => {

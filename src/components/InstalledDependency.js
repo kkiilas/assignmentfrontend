@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 
 const Dependency = ({ id, name }) => {
   return (
-    <Link className="link-info" to={`/${id}`}>
+    <Link className="link-info" to={`/packages/${id}`}>
       <h5>{name}</h5>
     </Link>
   )
