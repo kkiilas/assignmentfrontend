@@ -1,5 +1,6 @@
 import React from 'react'
-import Form from './Form'
+// import Form from './Form'
+import Forms from './Forms'
 import Packages from './Packages'
 import Notification from './Notification'
 
@@ -13,7 +14,7 @@ const Home = () => {
               <Notification />
               <div className="d-grid">
                 <h3 className="text-info">Upload a poetry.lock -file</h3>
-                <Form />
+                <Forms />
               </div>
             </div>
           </div>

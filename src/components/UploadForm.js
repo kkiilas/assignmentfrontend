@@ -4,7 +4,7 @@ import { parse, clearPackages } from '../reducers/packageReducer'
 import { setNotification } from '../reducers/notificationReducer'
 import fileService from '../services/fileService'
 
-const Form = () => {
+const UploadForm = () => {
   let fileInput = useRef()
   const dispatch = useDispatch()
 
@@ -51,4 +51,4 @@ const Form = () => {
   )
 }
 
-export default Form
+export default UploadForm
