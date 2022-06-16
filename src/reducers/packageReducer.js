@@ -68,7 +68,10 @@ const parseExtras = (text) => {
     .map((extra) => {
       const row = extra.split(' = ')[1]
       const trimmedRow = row.substring(2, row.length - 2)
-      const names = trimmedRow.split(`", "`).map((name) => name.split(' ')[0])
+      const names = trimmedRow
+        .split(`", "`)
+        .map((name) => name.split(' ')[0])
+        .map((name) => name.split('[')[0])
       return names
     })
     .flat()
