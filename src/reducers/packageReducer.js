@@ -18,6 +18,20 @@ const packageSlice = createSlice({
 
 export const { clearPackages, setPackages } = packageSlice.actions
 
+const extractVersion = (metadata) => {
+  const rows = metadata.split('\r\n')
+  const version = rows
+    .find((row) => row.includes('lock-version'))
+    .split(' = ')[1]
+    .replaceAll(`"`, '')
+  return version
+}
+
+const validateVersion = (metadata) => {
+  const version = extractVersion(metadata)
+  return version === '1.1'
+}
+
 const parseParts = (parts) => {
   const signifiers = parts[0]
     .split('\r\n')
@@ -119,6 +133,7 @@ const parseDepsAndExtras = (dependencies, extras) => {
 }
 
 const parseAttributes = (text) => {
+  let version
   const packages = text
     .split('\r\n\r\n[[package]]\r\n')
     .map((element) => {
@@ -127,7 +142,9 @@ const parseAttributes = (text) => {
         element = element.substring(startOfFile.length)
       }
       if (element.includes('\r\n\r\n[metadata]')) {
-        element = element.split('\r\n\r\n[metadata]')[0]
+        let metadata
+        ;[element, metadata] = element.split('\r\n\r\n[metadata]')
+        version = validateVersion(metadata)
       }
       const parts = element.split('\r\n\r\n')
       const parsedParts = parseParts(parts)
@@ -143,7 +160,7 @@ const parseAttributes = (text) => {
     .map((p, id) => {
       return { ...p, id }
     })
-  return packages
+  return { packages, version }
 }
 
 const addIndexAndWhetherInstalledToDependency = (i, name, packages) => {
@@ -242,13 +259,19 @@ const addReverseDependencies = (packages) => {
 }
 
 export const parse = (text) => {
-  const packages = parseAttributes(text)
+  const { packages, version } = parseAttributes(text)
   return (dispatch) => {
     if (packages.length === 0) {
       dispatch(
         setNotification(
           'No packages found! Double check the file you submitted. An example of a poetry.lock -file: https://github.com/python-poetry/poetry/blob/70e8e8ed1da8c15041c3054603088fce59e05829/poetry.lock'
         )
+      )
+      return
+    }
+    if (!version) {
+      dispatch(
+        setNotification('Wrong version! This parser only works on version 1.1.')
       )
       return
     }
