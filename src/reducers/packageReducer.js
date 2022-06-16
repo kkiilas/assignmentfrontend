@@ -271,7 +271,9 @@ export const parse = (text) => {
     }
     if (!version) {
       dispatch(
-        setNotification('Wrong version! This parser only works on version 1.1.')
+        setNotification(
+          'Wrong version! This parser only works with poetry.lock -files that are versioned 1.1.'
+        )
       )
       return
     }
